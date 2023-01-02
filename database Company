@@ -1,0 +1,135 @@
+USE company;
+
+#Question : Query the results of the details of facilities with ID 1 and 5 without the usage of the OR operator.
+
+SELECT *
+FROM facilities
+WHERE facid IN (1,5);
+
+
+#Question : Write a query that will print the firstname surname and joindate of the members table who joined after the start of September 2012.
+
+SELECT firstname, surname, joindate
+FROM members
+WHERE joindate >= '2012-09-01';
+
+#Question : Write a query that will print the first 10 surnames of the members table.
+Ordered and without duplicates.
+
+SELECT DISTINCT surname
+FROM members
+ORDER BY surname
+LIMIT 10;
+
+#Question : Query a list of all facilities with the word 'Tennis' in their name without the usage of the ' = ' operator.
+
+SELECT *
+FROM facilities
+WHERE name LIKE '%Tennis%';
+
+#Question : Write a query that will print the name and monthly maintenance of the facilities that are labelled as 'cheap' or 'expensive'. This is dependent on if their monthlymaintenance > 100.
+
+SELECT name,
+CASE 
+    WHEN (monthlymaintenance > 100) 
+    THEN 'expensive'
+    ELSE 'cheap'
+END AS cost
+FROM facilities;
+
+
+#Question : Write a query that will print the first name last name and the date of the last member who signed up.
+
+SELECT firstname, surname, joindate
+FROM members
+WHERE joindate = 
+(
+SELECT MAX(joindate)
+FROM members
+);
+
+#Question : Write a query that will print the name and surname of ALL of the members who have used a tennis court facility without duplicates.
+
+SELECT DISTINCT CONCAT(memes.firstname, ' ' , memes.surname) AS member, facs.name AS facility 
+FROM members memes
+JOIN bookings bks
+ON memes.memid = bks.memid
+JOIN facilities facs
+ON bks.facid = facs.facid
+WHERE bks.facid in (0,1);
+
+#Question : Write a query that will print a COUNT of the recommendations each member has made.
+
+SELECT recommendedby, COUNT(*)
+FROM members
+WHERE recommendedby IS NOT NULL
+GROUP BY recommendedby;
+
+#Question : Write a query that will print the total slots booked in the year of 2012 per
+facility per month.
+
+SELECT facid, MONTH(starttime) AS Month, SUM(slots) AS "Total Slots"
+FROM bookings
+WHERE starttime >= '2012-01-01'
+AND starttime < '2013-01-01'
+GROUP BY facid, Month;
+
+#Question : Write a query that will print the name and total revenue of each facility.
+- Take into consideration that each facility has a different price for members andguests
+
+SELECT facs.name, SUM(slots * 
+CASE
+WHEN memid = 0 
+THEN facs.guestcost
+ELSE facs.membercost
+END) AS revenue
+FROM bookings bks
+JOIN facilities facs
+ON bks.facid = facs.facid
+GROUP BY facs.name
+
+#Question : Query a list of the start times for bookings by members named 'Matthew'
+
+SELECT mems.memid, bks.starttime
+FROM bookings bks
+JOIN members mems
+ON mems.memid = bks.memid
+WHERE mems.firstname = 'Matthew';
+
+#Question : Write a query that will print the name and revenue of facilities with a total revenue less than 1000.
+
+SELECT name, revenue 
+FROM 
+(SELECT facs.name, 
+SUM(CASE
+WHEN memid = 0 
+THEN slots * facs.guestcost
+ELSE slots * membercost
+END) AS revenue
+FROM bookings bks
+JOIN facilities facs
+ON bks.facid = facs.facid
+GROUP BY facs.name
+) AS agg 
+WHERE revenue < 1000
+
+#Question : Write a query that will print the facility (facid) with the highest number of booked slots.
+
+SELECT facid, SUM(slots) AS totalslots
+FROM bookings
+GROUP BY facid
+HAVING SUM(slots) = 
+(SELECT MAX(sum2.totalslots) 
+FROM
+(SELECT SUM(slots) AS totalslots
+FROM bookings
+GROUP BY facid
+) AS sum2);
+
+#Question : Write a query that will print the firstname and surname of all the members who have recommended another member, without duplicates.
+ 
+SELECT DISTINCT recs.firstname as firstname, recs.surname AS surname
+FROM members mems
+JOIN members recs
+ON recs.memid = mems.recommendedby
+ORDER BY surname, firstname;
